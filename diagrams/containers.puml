@@ -1,0 +1,40 @@
+@startuml C4_Containers
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Диаграмма контейнеров системы "Тёплый дом"
+
+Person(user, "Пользователь", "Владелец умного дома")
+
+System_Boundary(c1, "Тёплый дом") {
+    Container(api_gateway, "API Gateway", "Go", "Единая точка входа в систему")
+
+    Container(device_service, "Device Management Service", "Go", "Управление устройствами")
+    Container(telemetry_service, "Telemetry Service", "Go", "Обработка телеметрии")
+    Container(user_service, "User Service", "Go", "Управление пользователями")
+    Container(scenario_service, "Scenario Service", "Go", "Управление сценариями")
+
+    ContainerDb(device_db, "Device DB", "PostgreSQL", "Хранение данных устройств")
+    ContainerDb(telemetry_db, "Telemetry DB", "TimescaleDB", "Хранение телеметрии")
+    ContainerDb(user_db, "User DB", "PostgreSQL", "Данные пользователей")
+
+    Container(message_broker, "Message Broker", "RabbitMQ", "Очередь сообщений")
+}
+
+System_Ext(smart_devices, "Умные устройства", "IoT устройства")
+
+Rel(user, api_gateway, "Использует", "HTTPS")
+Rel(api_gateway, device_service, "Запросы к устройствам", "gRPC")
+Rel(api_gateway, telemetry_service, "Запросы телеметрии", "gRPC")
+Rel(api_gateway, user_service, "Авторизация", "gRPC")
+Rel(api_gateway, scenario_service, "Управление сценариями", "gRPC")
+
+Rel(device_service, device_db, "Чтение/Запись", "SQL")
+Rel(telemetry_service, telemetry_db, "Чтение/Запись", "SQL")
+Rel(user_service, user_db, "Чтение/Запись", "SQL")
+
+Rel(device_service, message_broker, "Публикация событий", "AMQP")
+Rel(telemetry_service, message_broker, "Подписка на события", "AMQP")
+Rel(scenario_service, message_broker, "Публикация/Подписка", "AMQP")
+
+Rel(smart_devices, device_service, "Отправка данных", "MQTT")
+@enduml

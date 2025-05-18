@@ -1,0 +1,25 @@
+@startuml C4_Components
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Компоненты Device Management Service
+
+Container_Boundary(c1, "Device Management Service") {
+    Component(api, "Device API", "Go, gRPC", "API интерфейс сервиса")
+    Component(device_manager, "Device Manager", "Go", "Управление устройствами")
+    Component(protocol_adapter, "Protocol Adapter", "Go", "Адаптеры протоколов")
+    Component(state_manager, "State Manager", "Go", "Управление состоянием")
+    Component(event_publisher, "Event Publisher", "Go", "Публикация событий")
+}
+
+ContainerDb(db, "Device DB", "PostgreSQL", "База данных устройств")
+Container_Ext(broker, "Message Broker", "RabbitMQ", "Брокер сообщений")
+System_Ext(devices, "Smart Devices", "IoT устройства")
+
+Rel(api, device_manager, "Использует")
+Rel(device_manager, protocol_adapter, "Использует")
+Rel(device_manager, state_manager, "Управляет состоянием")
+Rel(state_manager, db, "Сохраняет")
+Rel(device_manager, event_publisher, "Публикует события")
+Rel(event_publisher, broker, "Отправляет события")
+Rel(protocol_adapter, devices, "Взаимодействует")
+@enduml
