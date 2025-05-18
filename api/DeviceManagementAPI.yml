@@ -1,0 +1,158 @@
+openapi: 3.1.0
+info:
+  title: Device Management API
+  version: 0.0.1
+servers:
+  - url: https://api.warmhouse.gamu/devices
+paths:
+  /modules/{moduleId}/devices:
+    parameters:
+      - $ref: '#/components/parameters/ModuleId'
+    get:
+      summary: Получить список устройств модуля
+      responses:
+        '200':
+          description: Список устройств
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Device' }
+    post:
+      summary: Зарегистрировать новое устройство в модуле
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/NewDevice' }
+      responses:
+        '201':
+          description: Создано
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Device' }
+        '404': { $ref: '#/components/responses/ModuleNotFound' }
+
+  /devices/{deviceId}:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    get:
+      summary: Получить подробную информацию об устройстве
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Device' }
+        '404': { $ref: '#/components/responses/DeviceNotFound' }
+
+  /devices/{deviceId}/state:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    patch:
+      summary: Обновить логическое состояние (вкл/выкл и т.д.)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DeviceStatePatch' }
+      responses:
+        '200': { description: Обновлено }
+        '404': { $ref: '#/components/responses/DeviceNotFound' }
+
+  /devices/{deviceId}/commands:
+    parameters:
+      - $ref: '#/components/parameters/DeviceId'
+    post:
+      summary: Отправить произвольную команду устройству
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CommandRequest' }
+            examples:
+              setTemp:
+                summary: Установить температуру
+                value:
+                  command: set_temperature
+                  payload:
+                    value: 22
+      responses:
+        '202':
+          description: Команда принята к исполнению
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommandAccepted' }
+        '404': { $ref: '#/components/responses/DeviceNotFound' }
+
+components:
+  parameters:
+    DeviceId:
+      name: deviceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ModuleId:
+      name: moduleId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    DeviceNotFound:
+      description: Устройство не найдено
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ModuleNotFound:
+      description: Модуль не найден
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Device:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        moduleId: { type: string, format: uuid }
+        deviceTypeId: { type: string, format: uuid }
+        serialNumber: { type: string }
+        name: { type: string }
+        status: { $ref: '#/components/schemas/DeviceStatus' }
+        lastSeenAt: { type: string, format: date-time }
+      required: [id, moduleId, deviceTypeId, serialNumber, status]
+
+    NewDevice:
+      allOf:
+        - $ref: '#/components/schemas/Device'
+        - required: [deviceTypeId, serialNumber]
+
+    DeviceStatus:
+      type: string
+      enum: [online, offline, unknown]
+
+    DeviceStatePatch:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/DeviceStatus' }
+      additionalProperties: false
+
+    CommandRequest:
+      type: object
+      properties:
+        command: { type: string }
+        payload: { type: object, additionalProperties: true }
+      required: [command]
+
+    CommandAccepted:
+      type: object
+      properties:
+        commandId: { type: string, format: uuid }
+        deviceId: { type: string, format: uuid }
+        acceptedAt: { type: string, format: date-time }
+
+    Error:
+      type: object
+      properties:
+        message: { type: string }

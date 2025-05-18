@@ -1,0 +1,38 @@
+@startuml C4_Code
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Dynamic.puml
+
+title Структура классов Device Manager
+
+class DeviceManager {
+    -devices: map[string]Device
+    -protocolAdapter: ProtocolAdapter
+    -stateManager: StateManager
+    +RegisterDevice(device: Device)
+    +RemoveDevice(deviceId: string)
+    +ControlDevice(deviceId: string, command: Command)
+    +GetDeviceStatus(deviceId: string): Status
+}
+
+interface ProtocolAdapter {
+    +SendCommand(device: Device, command: Command)
+    +ReadStatus(device: Device): Status
+}
+
+class StateManager {
+    -db: Database
+    +SaveState(deviceId: string, state: State)
+    +GetState(deviceId: string): State
+    +UpdateState(deviceId: string, state: State)
+}
+
+class Device {
+    -id: string
+    -type: DeviceType
+    -protocol: Protocol
+    -status: Status
+}
+
+DeviceManager o-- Device
+DeviceManager --> ProtocolAdapter
+DeviceManager --> StateManager
+@enduml

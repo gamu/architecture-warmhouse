@@ -1,0 +1,93 @@
+@startuml ER_Diagram
+!define table(x) class x << (T,#FFAAAA) >>
+hide methods
+hide stereotypes
+
+' ---------- Сущности ----------
+table(User) {
+  id PK
+  email
+  password_hash
+  full_name
+  created_at
+  status
+}
+
+table(House) {
+  id PK
+  name
+  address
+  timezone
+  created_at
+}
+
+table(UserHouse) {
+  user_id FK
+  house_id FK
+  role
+  invited_at
+  PK (user_id, house_id)
+}
+
+table(ModuleType) {
+  id PK
+  code
+  name
+  description
+}
+
+table(Module) {
+  id PK
+  module_type_id FK
+  house_id FK
+  name
+  status
+  created_at
+}
+
+table(DeviceType) {
+  id PK
+  code
+  name
+  protocol
+  description
+}
+
+table(Device) {
+  id PK
+  module_id FK
+  device_type_id FK
+  serial_number
+  name
+  status
+  last_seen_at
+}
+
+table(TelemetryData) {
+  id PK
+  device_id FK
+  ts
+  key
+  value
+}
+
+table(CommandLog) {
+  id PK
+  device_id FK
+  issued_at
+  command
+  payload
+  result_status
+}
+
+' ---------- Связи ----------
+User "1" -- "0..*" UserHouse : owns >
+House "1" -- "0..*" UserHouse : < access
+House "1" -- "0..*" Module : contains >
+ModuleType "1" -- "0..*" Module : < typed by
+Module "1" -- "0..*" Device : contains >
+DeviceType "1" -- "0..*" Device : < typed by
+Device "1" -- "0..*" TelemetryData : generates >
+Device "1" -- "0..*" CommandLog : has >
+
+@enduml
